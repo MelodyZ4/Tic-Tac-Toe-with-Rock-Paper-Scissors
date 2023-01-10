@@ -1,0 +1,465 @@
+//This program is a menu which allows the user to input a choice. '1' displays the instructions, '2' allows the user to play Tic-Tac-Toe But If You Tie You Play Rock Paper Scissors, and '3' stops the program.*/
+
+import java.util.Scanner;
+
+class Main {
+  //colours and text styles
+  public static final String reset = "\u001B[0m";
+  public static final String red = "\u001B[31m"; //X's
+  public static final String green = "\033[1;32m"; //columns
+  public static final String cyan = "\033[1;36m"; //rows
+  public static final String bold_underline = "\033[4;1;38m";
+  public static final String bold = "\033[1;38m";
+  public static final String underline = "\033[4;38m";
+
+  public static void main(String[] args) {
+    Scanner in = new Scanner(System.in);
+    String choiceTemp;
+    int choice;
+    char[][] board = new char[3][3];
+    boolean won, playerTurn;
+
+    //menu
+    do {
+      //clears screen
+      System.out.print("\033[H\033[2J");
+      System.out.flush();
+
+      System.out.println(bold_underline + "Welcome to Tic-Tac-Toe But If You Tie You Play Rock Paper Scissors" + reset);
+      System.out.println(bold + "\n\nMenu:" + reset + "\n1 - How To Play\n2 - Play\n3 - Quit\n");
+
+      //player inputs menu choice
+      while(true) {
+        System.out.print("Enter number to make selection: ");
+        choiceTemp = in.nextLine();
+        try {
+          choice = Integer.parseInt(choiceTemp);
+          if(choice < 1 || choice > 3) {
+            throw new Exception();
+          }
+          break;
+        }
+        catch(Exception e) {
+          System.out.println("Invalid input. Please try again.\n");
+        }
+      }
+
+      //initializes board
+      for(int i = 0; i < 3; i++) {
+        for(int j = 0; j < 3; j++) {
+          board[i][j] = ' ';
+        }
+      }
+
+      //calls how to play method
+      if(choice == 1) {
+        howToPlay(board, in);
+      }
+
+      //Tic Tac Toe
+      else if(choice == 2) {
+        won = false;
+        playerTurn = true;
+
+        //clears screen
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
+
+        System.out.println(bold + "Tic Tac Toe" + reset);
+        printBoard(board);
+        for(int i = 1; i < 11; i++) {
+          //if someone has already won, check who it is, display message accordingly, and return to menu when user presses enter
+          if(won) {
+            if(!playerTurn) {
+              System.out.println("Congrats! You won!");
+            }
+            else {
+              System.out.println("You lost. Better luck next time!");
+            }
+
+            System.out.print(underline + "\nPress Enter key to return to Menu" + reset);
+            in.nextLine();
+            break;
+          }
+
+          //if nobody has won yet, and there are still turns left, play according to whose turn it is
+          else if(i < 10) {
+            if(playerTurn) {
+              playerMove(board, in);
+              playerTurn = false;
+            }
+            else {
+              computerMove(board);
+              playerTurn = true;
+            }
+          }
+
+          //checks if anyone has won yet
+          //checks if 3 of the same symbol in a row or column
+          for(int j = 0; j < 3; j++) {
+            if(board[j][0] != ' ' && board[j][0] == board[j][1] && board[j][1] == board[j][2]) {
+              won = true;
+              break;
+            }
+            if(board[0][j] != ' ' && board[0][j] == board[1][j] && board[1][j] == board[2][j]) {
+              won = true;
+              break;
+            }
+          }
+          //checks if 3 of the same symbol in a diagonal
+          if(board[0][0] != ' ' && board[0][0] == board[1][1] && board[1][1] == board[2][2]) {
+            won = true;
+          }
+          if(board[0][2] != ' ' && board[0][2] == board[1][1] && board[1][1] == board[2][0]) {
+            won = true;
+          }
+        }
+
+        //if all the turns are up and nobody has won, play rock paper scissors
+        if(!won) {
+          System.out.println("That was a tie. In a moment, you'll be directed to Rock Paper Scissors.\nBeat the computer to win the game");
+
+          //pauses for 7 seconds
+          try {
+            Thread.sleep(7000);
+          }
+          catch(InterruptedException e) {
+            Thread.currentThread().interrupt();
+          }
+
+          //clears screen
+          System.out.print("\033[H\033[2J");
+          System.out.flush();
+
+          System.out.println(bold + "Rock Paper Scissors" + reset);
+          RPS(in);
+        }
+      }
+
+      else {
+        System.out.println("\n\nThanks for playing!");
+      }
+    }
+    while(choice != 3);
+
+    in.close();
+  }
+
+  /*method howToPlay
+  *called from main menu, prints the blank board and each section of the game rules, continues to different sections when user presses enter
+  *pre: N/A
+  *post: returns to menu when all sections have been displayed and user presses enter
+  */
+  public static void howToPlay(char[][] board, Scanner in) {
+    //clears screen
+    System.out.print("\033[H\033[2J");
+    System.out.flush();
+
+    System.out.println(bold + "How To Play" + reset);
+    
+    //instructions section 1
+    printBoard(board);
+    System.out.print("Tic-Tac-Toe takes place on a 3 by 3 board, which can be seen above.\n\nYou will go first and you will place your symbol, which looks like " + red + "X" + reset + ", somewhere on the board. You do this by typing in a " + cyan + "row number" + reset + " (labelled in cyan) and a " + green + "column number" + reset + " (labelled in green) when prompted. Avoid using decimal places. The computer will play after you and place an O somewhere on the board. You will take turns until someone wins.\n\n" + underline + "Press Enter key to continue reading" + reset);
+
+    in.nextLine();
+
+    //instructions section 2
+    System.out.print("\033[H\033[2J");
+    System.out.flush();
+    System.out.print("\nThe goal of Tic-Tac-Toe is to get three of your symbol in a straight line before your opponent manages to. This can either be three in a row horizontally, vertically, or diagonally across the board. If the board has been filled and nobody has won, it is a tie.\n\n" + underline + "Press Enter key to continue reading" + reset);
+
+    in.nextLine();
+
+    //instructions section 3
+    System.out.print("\033[H\033[2J");
+    System.out.flush();
+    System.out.print("\nIn the case of a tie, you will play the computer in a game of rock paper scissors. You can make your selection by typing in rock, paper, or scissors (or r for rock, p for paper, s for scissors) without spaces. The computer will randomly choose one of these options as well. Paper beats rock, rock beats scissors, and scissors beats paper. The winner of rock paper scissors wins the game.\n\nGood luck, and have fun!\n\n" + underline + "Press Enter key to return to Menu" + reset);
+
+    in.nextLine();
+  }
+
+  /*method printBoard
+  *prints the Tic Tac Toe board
+  *pre: N/A
+  *post: prints and returns the Tic Tac Toe board
+  */
+  public static char[][] printBoard(char[][] board) {
+    System.out.println(green + "\n    0   1   2" + reset);
+    System.out.println("   --- --- ---");
+    for(int i = 0; i < 3; i++) {
+      for(int j = 0; j < 3; j++) {
+        if(j == 0) {
+          System.out.print(cyan + i + reset + " |");
+        }
+
+        if(board[i][j] == 'X') {
+          System.out.print(" " + red + board[i][j] + reset + " |");
+        }
+        else {
+          System.out.print(" " + board[i][j] + " |");
+        }
+      }
+      System.out.println("\n   --- --- ---");
+    }
+
+    System.out.println();
+    return board;
+  }
+
+  /*method playerMove
+  *asks user to input which row and column they want to play until they input a valid choice, plays where user indicated
+  *pre: N/A
+  *post: calls the printBoard method
+  */
+  public static void playerMove(char[][] board, Scanner in) {
+    String rowTemp, colTemp;
+    int row, col;
+    
+    System.out.println(underline + "Your turn" + reset);
+    //player inputs row choice
+    while(true) {
+      System.out.print("Enter " + cyan + "row" + reset + " number: ");
+      rowTemp = in.nextLine();
+
+      try {
+        row = Integer.parseInt(rowTemp);
+        if(row < 0 || row > 2) {
+          throw new Exception();
+        }
+        break;
+      }
+      catch(Exception e) {
+        System.out.println("Invalid input. Please try again.\n");
+      }
+    }
+
+    //player inputs column choice
+    while(true) {
+      System.out.print("Enter " + green + "column" + reset + " number: ");
+      colTemp = in.nextLine();
+
+      try {
+        col = Integer.parseInt(colTemp);
+        if(col < 0 || col > 2) {
+          throw new Exception();
+        }
+        break;
+      }
+      catch(Exception e) {
+        System.out.println("Invalid input. Please try again.\n");
+      }
+    }
+
+    if(board[row][col] != ' ') {
+      System.out.println("That has already been played. Try again\n");
+      playerMove(board, in);
+    }
+    else {
+      board[row][col] = 'X';
+      printBoard(board);
+    }
+  }
+
+  /*method computerMove
+  *picks an empty square on the board according to what the player has played and plays there
+  *pre: N/A
+  *post: calls printBoard method
+  */
+  public static void computerMove(char[][] board) {
+    int compRow, compCol;
+
+    //randomly chooses a square to play so the computer isn't unbeatable
+    do {
+      compRow = (int)(Math.random()*3);
+      compCol = (int)(Math.random()*3);
+    }
+    while (board[compRow][compCol] != ' ');
+
+    //play in the middle if it's blank
+    if(board[1][1] == ' ') {
+      compRow = 1;
+      compCol = 1;
+    }
+    //if there are two of a symbol touching diagonally, play where the blank is
+    else {
+      if(board[0][0] == board[1][1] && board[2][2] == ' ') {
+        compRow = 2;
+        compCol = 2;
+      }
+      else if(board[2][2] == board[1][1] && board[0][0] == ' ') {
+        compRow = 0;
+        compCol = 0;
+      }
+      else if(board[2][0] == board[1][1] && board[0][2] == ' ') {
+        compRow = 0;
+        compCol = 2;
+      }
+      else if(board[0][2] == board[1][1] && board[2][0] == ' ') {
+        compRow = 2;
+        compCol = 0;
+      }
+    }
+
+    //if the player is one move away from winning, play where that blank is (second highest priority)
+    for(int i = 0; i < 3; i++) {
+      for(int j = 0; j < 3; j++) {
+        //if there are 2 touching X's in a row and a blank, play where the blank is
+        if(j < 2 && board[i][j] == 'X' && board[i][j+1] == 'X') {
+          if(j == 0 && board[i][2] == ' ') {
+            compRow = i;
+            compCol = 2;
+          }
+          else if(j == 1 && board[i][0] == ' ') {
+            compRow = i;
+            compCol = 0;
+          }
+        }
+
+        //if there are 2 touching X's in a column and a blank, play where the blank is
+        if(i < 2 && board[i][j] == 'X' && board[i+1][j] == 'X') {
+          if(i == 0 && board[2][j] == ' ') {
+            compCol = j;
+            compRow = 2;
+          }
+          else if(i == 1 && board[0][j] == ' '){
+            compCol = j;
+            compRow = 0;
+          }
+        }
+      }
+
+      //if there are 2 X's in a row and middle is blank, play in the middle
+      if(board[i][0] == 'X' && board[i][2] == 'X' && board[i][1] == ' ') {
+        compRow = i;
+        compCol = 1;
+      }
+
+      //if there are 2 X's a column and middle is blank, play in the middle
+      if(board[0][i] == 'X' && board[2][i] == 'X' && board[1][i] == ' ') {
+        compRow = 1;
+        compCol = i;
+      }
+    }
+
+    //if the computer is one move away from winning, play where the blank is (highest priority)
+    for(int i = 0; i < 3; i++) {
+      for(int j = 0; j < 3; j++) {
+        //if there are 2 touching O's in a row and a blank, play where the blank is
+        if(j < 2 && board[i][j] == 'O' && board[i][j+1] == 'O') {
+          if(j == 0 && board[i][2] == ' ') {
+            compRow = i;
+            compCol = 2;
+          }
+          else if(j == 1 && board[i][0] == ' ') {
+            compRow = i;
+            compCol = 0;
+          }
+        }
+
+        //if there are 2 touching O's in a column and a blank, play where the blank is
+        if(i < 2 && board[i][j] == 'O' && board[i+1][j] == 'O') {
+          if(i == 0 && board[2][j] == ' ') {
+            compCol = j;
+            compRow = 2;
+          }
+          else if(i == 1 && board[0][j] == ' '){
+            compCol = j;
+            compRow = 0;
+          }
+        }
+      }
+
+      //if there are 2 O's in a row and middle is blank, play in the middle
+      if(board[i][0] == 'O' && board[i][2] == 'O' && board[i][1] == ' ') {
+        compRow = i;
+        compCol = 1;
+      }
+      
+      //if there are 2 O's a column and middle is blank, play in the middle
+      if(board[0][i] == 'O' && board[2][i] == 'O' && board[1][i] == ' ') {
+        compRow = 1;
+        compCol = i;
+      }
+    }
+    
+    board[compRow][compCol] = 'O';
+    System.out.println(underline + "Computer's turn" + reset);
+
+    //pauses for 1 second
+    try {
+      Thread.sleep(1000);
+    }
+    catch(InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+
+    printBoard(board);
+  }
+
+  /*method RPS
+  *computer randomly chooses rock/paper/scissors, player inputs their choice, determines if player wins/loses/ties and displays message accordingly. will run again in case of a tie
+  *pre: N/A
+  *post: prints if user won or lost, returns to menu when user presses enter
+  */
+  public static void RPS(Scanner in) {
+    String player, computer;
+    int rand;
+
+    //computer randomly picks rock/paper/scissors
+    rand = (int)(Math.random()*3);
+    if(rand == 0) {
+      computer = "rock";
+    }
+    else if(rand == 1) {
+      computer = "paper";
+    }
+    else {
+      computer = "scissors";
+    }
+
+    //player inputs choice
+    while(true) {
+      System.out.print("\nType rock, paper, or scissors (or r/p/s): ");
+      player = in.nextLine();
+      player = player.toLowerCase();
+      if(player.equals("r")) {
+        player = "rock";
+      }
+      else if(player.equals("p")) {
+        player = "paper";
+      }
+      else if(player.equals("s")) {
+        player = "scissors";
+      }
+
+      if(player.equals("rock") || player.equals("scissors") || player.equals("paper")) {
+        break;
+      }
+      else {
+        System.out.println("Not a valid choice, please try again.\n");
+      }
+    }
+
+    System.out.println("The computer chose " + computer + ".");
+
+    //runs this method again if there is a tie
+    if(player.equals(computer)) {
+      System.out.println("\nThat was a tie. Play again!\n");
+      RPS(in);
+    }
+    //checks if player won
+    else if(player.equals("rock")&&computer.equals("scissors") || player.equals("paper")&&computer.equals("rock") || player.equals("scissors")&&computer.equals("paper")) {
+      System.out.println("\nCongrats! You won!\n\n");
+    }
+    else {
+      System.out.println("\nYou lost. Better luck next time!\n\n");
+    }
+    
+    System.out.print(underline + "Press Enter key to return to Menu" + reset);
+    try {  
+      System.in.read();
+      in.nextLine();
+    }  
+    catch(Exception e) {}
+  }
+}
